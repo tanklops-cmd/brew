@@ -1,0 +1,34 @@
+{
+  "name": "Hopsession Brewing",
+  "short_name": "Hopsession",
+  "description": "Hopsession production tracking, inventory control, brewing calculators, and audit exports.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#171b18",
+  "theme_color": "#171b18",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/hopsession-logo.png",
+      "sizes": "1200x628",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/",
+      "icons": [{ "src": "/icons/hopsession-logo.png", "sizes": "1200x628", "type": "image/png" }]
+    },
+    {
+      "name": "Brewing",
+      "short_name": "Brewing",
+      "url": "/?view=logs",
+      "icons": [{ "src": "/icons/hopsession-logo.png", "sizes": "1200x628", "type": "image/png" }]
+    }
+  ]
+}

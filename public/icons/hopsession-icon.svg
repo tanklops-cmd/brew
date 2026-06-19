@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Hopsession Brewers Companion">
+  <rect width="512" height="512" rx="96" fill="#0e3d30"/>
+  <circle cx="256" cy="256" r="176" fill="#e1a928"/>
+  <path d="M159 166h54v73h86v-73h54v183h-54v-74h-86v74h-54V166Z" fill="#0e3d30"/>
+  <path d="M356 347c-47 25-105 27-154 5 25 42 78 64 131 48 24-7 43-21 57-39-12-1-23-6-34-14Z" fill="#1b6b50"/>
+</svg>
