@@ -8,7 +8,6 @@ import {
   ArrowRight,
   Barcode,
   Beer,
-  Bell,
   CalendarDays,
   Calculator,
   Camera,
@@ -276,7 +275,6 @@ function Dashboard({ data, latestByBatch, setActiveBatchId, setActiveView, onTan
   const totalVolume = activeBatches.reduce((sum, batch) => sum + Number(batch.volume_l || 0), 0);
   const ready = activeBatches.filter((batch) => batch.status === "Ready to package").length;
   const availableTanks = data.tanks.filter((tank) => tank.status === "Available").length;
-  const tasks = buildTasks(activeBatches, latestByBatch, data.tanks);
   const chartData = data.logs.map((log) => ({
     ...log,
     time: new Date(log.logged_at).toLocaleDateString("en-NZ", { day: "2-digit", month: "short" })
@@ -349,29 +347,6 @@ function Dashboard({ data, latestByBatch, setActiveBatchId, setActiveView, onTan
             </article>
           );
         })}
-      </section>
-
-      <section className="panel tasks-panel">
-        <SectionTitle icon={<Bell />} title="Upcoming tasks" />
-        <div className="task-list">
-          {tasks.map((task) => (
-            <button
-              className={`task-item ${task.priority}`}
-              key={`${task.batchId || task.tankId || "task"}-${task.title}`}
-              onClick={() => {
-                if (task.batchId) setActiveBatchId(task.batchId);
-                setActiveView(task.targetView);
-              }}
-            >
-              <span className="task-icon">{task.icon}</span>
-              <span>
-                <strong>{task.title}</strong>
-                <small>{task.detail}</small>
-              </span>
-              <Pill>{task.due}</Pill>
-            </button>
-          ))}
-        </div>
       </section>
 
       <section className="panel chart-panel">

@@ -71,14 +71,14 @@ a {
 
 .brand-mark {
   width: 100%;
-  max-width: 214px;
-  aspect-ratio: 2.95 / 1;
+  max-width: 230px;
+  aspect-ratio: 1200 / 628;
   border-radius: 18px;
   display: grid;
   place-items: center;
   overflow: hidden;
   background: #f7f5ee;
-  padding: 8px 12px;
+  padding: 0;
 }
 
 .brand-mark img {
@@ -621,7 +621,7 @@ textarea {
 }
 
 .chart-panel {
-  grid-column: span 8;
+  grid-column: 1 / -1;
 }
 
 .wide {
@@ -1643,25 +1643,12 @@ label {
     align-items: center;
   }
 
-  .brand-lockup {
-    justify-content: center;
-    padding: 0 0 14px;
-  }
-
-  .brand-lockup div:last-child,
+  .brand-lockup,
   .nav-list button span,
   .nav-kicker,
   .sidebar-footer span {
     font-size: 0;
     display: none;
-  }
-
-  .brand-mark {
-    width: 52px;
-    aspect-ratio: 1;
-    border-radius: 8px;
-    font-size: 1.15rem;
-    padding: 5px;
   }
 
   .nav-list button,
