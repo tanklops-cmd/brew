@@ -210,13 +210,6 @@ function App() {
       </aside>
 
       <main>
-        <header className="topbar">
-          <div className="page-heading">
-            <p className="eyebrow">Hopsession Brewing</p>
-            <h1>{viewTitle(activeView)}</h1>
-          </div>
-        </header>
-
         {isLoading ? (
           <div className="loading-state">Loading brewery records...</div>
         ) : (
@@ -2074,15 +2067,6 @@ function nextExpiry(batches) {
     .filter(Boolean)
     .sort();
   return dates[0] ? new Date(dates[0]).toLocaleDateString("en-NZ", { day: "2-digit", month: "short" }) : "TBC";
-}
-
-function viewTitle(view) {
-  return {
-    logs: "Brewing workflow",
-    qa: "Audit centre",
-    inventory: "Inventory management",
-    tools: "Brewing tools"
-  }[view] || "Brewery companion";
 }
 
 function getInitialView() {
