@@ -380,14 +380,14 @@ function Dashboard({ data, latestByBatch, setActiveBatchId, setActiveView, onTan
         <div className="chart-frame">
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#d7ded6" />
-              <XAxis dataKey="time" />
-              <YAxis yAxisId="left" domain={["auto", "auto"]} />
-              <YAxis yAxisId="right" orientation="right" domain={[3.8, 5.4]} />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+              <XAxis dataKey="time" tick={{ fill: "var(--muted)" }} />
+              <YAxis yAxisId="left" domain={["auto", "auto"]} tick={{ fill: "var(--muted)" }} />
+              <YAxis yAxisId="right" orientation="right" domain={[3.8, 5.4]} tick={{ fill: "var(--muted)" }} />
+              <Tooltip contentStyle={{ background: "var(--panel-raised)", border: "1px solid var(--line)", borderRadius: 8, color: "var(--ink)" }} />
               <Legend />
-              <Line yAxisId="left" type="monotone" dataKey="gravity" stroke="#1b6b50" strokeWidth={3} dot={false} />
-              <Line yAxisId="right" type="monotone" dataKey="ph" name="pH" stroke="#e1a928" strokeWidth={3} dot />
+              <Line yAxisId="left" type="monotone" dataKey="gravity" stroke="var(--green)" strokeWidth={3} dot={false} />
+              <Line yAxisId="right" type="monotone" dataKey="ph" name="pH" stroke="var(--gold)" strokeWidth={3} dot />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -836,11 +836,11 @@ function BrewingView({ data, activeBatch, activeLogs, onSaveBatch, onSaveBatchPr
                 <p className="muted-copy" style={{ marginBottom: 8, fontSize: "0.82rem" }}>Gravity trend</p>
                 <ResponsiveContainer width="100%" height={130}>
                   <AreaChart data={logChartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                    <XAxis dataKey="time" tick={{ fontSize: 10, fill: "#aab4a6" }} />
-                    <YAxis domain={["auto", "auto"]} tick={{ fontSize: 10, fill: "#aab4a6" }} />
-                    <Tooltip contentStyle={{ background: "#0d2018", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10 }} />
-                    <Area type="monotone" dataKey="gravity" stroke="#7de2b2" fill="rgba(125,226,178,0.1)" strokeWidth={2} dot={false} name="Gravity" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+                    <XAxis dataKey="time" tick={{ fontSize: 10, fill: "var(--muted)" }} />
+                    <YAxis domain={["auto", "auto"]} tick={{ fontSize: 10, fill: "var(--muted)" }} />
+                    <Tooltip contentStyle={{ background: "var(--panel-raised)", border: "1px solid var(--line)", borderRadius: 8, color: "var(--ink)" }} />
+                    <Area type="monotone" dataKey="gravity" stroke="var(--green)" fill="rgba(131,184,146,0.12)" strokeWidth={2} dot={false} name="Gravity" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -935,9 +935,8 @@ function currentDateTimeLocalValue() {
   return new Date(now.getTime() - offsetMs).toISOString().slice(0, 16);
 }
 
-function displayDateTimeLocalValue(value) {
-  if (!value) return "Auto timestamp";
-  return new Date(value).toLocaleString("en-NZ", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+function displayDateTimeLocalValue(value, fallbackValue = currentDateTimeLocalValue()) {
+  return new Date(value || fallbackValue).toLocaleString("en-NZ", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
 function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItems = []) {
@@ -1219,6 +1218,15 @@ function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItem
 }
 
 function TemperatureCheckPanel({ title, checks = [], onChange, minRows = 1, maxRows = Infinity, addLabel = "Add check" }) {
+  const [systemTimestamp, setSystemTimestamp] = useState(currentDateTimeLocalValue());
+
+  useEffect(() => {
+    const updateTimestamp = () => setSystemTimestamp(currentDateTimeLocalValue());
+    updateTimestamp();
+    const interval = setInterval(updateTimestamp, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const updateCheck = (index, key, value) => {
     const next = checks.map((check, rowIndex) => {
       if (rowIndex !== index) return check;
@@ -1260,7 +1268,7 @@ function TemperatureCheckPanel({ title, checks = [], onChange, minRows = 1, maxR
             </label>
             <label>
               Timestamp
-              <span className="timestamp-display">{displayDateTimeLocalValue(check.checked_at)}</span>
+              <span className="timestamp-display">{displayDateTimeLocalValue(check.checked_at, systemTimestamp)}</span>
             </label>
             <label>
               Temp C
