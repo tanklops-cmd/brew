@@ -2618,6 +2618,46 @@ textarea::placeholder {
   color: var(--ink);
 }
 
+:root[data-theme="light"] .tank-card,
+:root[data-theme="light"] .metric {
+  background: var(--surface-gradient);
+  color: var(--ink);
+}
+
+:root[data-theme="light"] .tank-card.filled {
+  background: linear-gradient(145deg, #edf0df 0%, #d9d4c8 100%);
+}
+
+:root[data-theme="light"] .tank-open:hover {
+  background: rgba(63, 123, 88, 0.08);
+}
+
+:root[data-theme="light"] .tank-status-control {
+  border-top-color: rgba(39, 45, 39, 0.12);
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .mini-readings,
+:root[data-theme="light"] .tank-card strong,
+:root[data-theme="light"] .reading-bar-label strong,
+:root[data-theme="light"] .tank-status-control strong {
+  color: var(--ink);
+}
+
+:root[data-theme="light"] .reading-bar-label,
+:root[data-theme="light"] .empty-tank {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .reading-bar-track,
+:root[data-theme="light"] .gravity-progress-track,
+:root[data-theme="light"] .tank-step-seg,
+:root[data-theme="light"] .step-track-dot,
+:root[data-theme="light"] .task-item .task-icon {
+  background: #d0cbbf;
+  box-shadow: var(--shadow-inset);
+}
+
 :root[data-theme="light"] .primary-button {
   background: linear-gradient(145deg, #5f9d75 0%, #3f7b58 100%);
   color: #f8f5eb;
