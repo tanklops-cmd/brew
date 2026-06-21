@@ -853,7 +853,10 @@ function buildStepDraft(stepId, processData, activeBatch) {
     case "mash":
       return {
         strikeTemp: saved.strikeTemp ?? "",
+        strikeWaterTempChecks: normalizeTempChecks(saved.strikeWaterTempChecks, ["Strike water"]),
         mashTemp: saved.mashTemp ?? "",
+        mashTempChecks: normalizeTempChecks(saved.mashTempChecks, ["Mash in", "Mid mash", "Mash out"]),
+        spargeTempChecks: normalizeTempChecks(saved.spargeTempChecks, ["Sparge"]),
         mashDuration: saved.mashDuration ?? "",
         mashNotes: saved.mashNotes ?? ""
       };
@@ -861,6 +864,7 @@ function buildStepDraft(stepId, processData, activeBatch) {
       return {
         boilDuration: saved.boilDuration ?? "",
         hopAdditions: saved.hopAdditions ?? "",
+        whirlpoolTempChecks: normalizeTempChecks(saved.whirlpoolTempChecks, ["Whirlpool"]),
         kettleGravity: saved.kettleGravity ?? "",
         boilNotes: saved.boilNotes ?? ""
       };
@@ -869,12 +873,16 @@ function buildStepDraft(stepId, processData, activeBatch) {
         fermentationTemp: saved.fermentationTemp ?? activeBatch?.fermentation_temp_c ?? "",
         targetOG: saved.targetOG ?? activeBatch?.target_og ?? "",
         targetFG: saved.targetFG ?? activeBatch?.target_fg ?? "",
+        yeastPitchTempChecks: normalizeTempChecks(saved.yeastPitchTempChecks, ["Yeast pitch"]),
+        fermentationMonitoring: saved.fermentationMonitoring ?? "Twice daily checks",
+        fermentationTempChecks: normalizeTempChecks(saved.fermentationTempChecks, ["Fermentation AM", "Fermentation PM"]),
         fermentationNotes: saved.fermentationNotes ?? ""
       };
     case "conditioning":
       return {
         conditioningDays: saved.conditioningDays ?? "",
         clarityGoal: saved.clarityGoal ?? "",
+        coldCrashTempChecks: normalizeTempChecks(saved.coldCrashTempChecks, ["Cold crash day 1"]),
         conditioningNotes: saved.conditioningNotes ?? ""
       };
     case "packaging":
@@ -886,6 +894,18 @@ function buildStepDraft(stepId, processData, activeBatch) {
     default:
       return {};
   }
+}
+
+function normalizeTempChecks(saved, labels) {
+  if (Array.isArray(saved) && saved.length) {
+    return saved.map((check, index) => ({
+      label: check.label ?? labels[index] ?? `Check ${index + 1}`,
+      checked_at: check.checked_at ?? "",
+      temperature_c: check.temperature_c ?? "",
+      notes: check.notes ?? ""
+    }));
+  }
+  return labels.map((label) => ({ label, checked_at: "", temperature_c: "", notes: "" }));
 }
 
 function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItems = []) {
@@ -1019,14 +1039,29 @@ function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItem
     case "mash":
       return (
         <>
-          <label>
-            Strike temp (°C)
-            <input type="number" step="0.1" value={draft.strikeTemp} onChange={(event) => updateField("strikeTemp", event.target.value)} />
-          </label>
-          <label>
-            Mash temp (°C)
-            <input type="number" step="0.1" value={draft.mashTemp} onChange={(event) => updateField("mashTemp", event.target.value)} />
-          </label>
+          <TemperatureCheckPanel
+            title="Strike water temperature"
+            description="Record the strike water temperature before mash in."
+            checks={draft.strikeWaterTempChecks}
+            onChange={(checks) => updateField("strikeWaterTempChecks", checks)}
+            maxRows={1}
+          />
+          <TemperatureCheckPanel
+            title="Mash temperature checks"
+            description="Record 3-5 mash checks across the rest."
+            checks={draft.mashTempChecks}
+            onChange={(checks) => updateField("mashTempChecks", checks)}
+            minRows={3}
+            maxRows={5}
+          />
+          <TemperatureCheckPanel
+            title="Sparge temperature checks"
+            description="Record 1-2 sparge checks."
+            checks={draft.spargeTempChecks}
+            onChange={(checks) => updateField("spargeTempChecks", checks)}
+            minRows={1}
+            maxRows={2}
+          />
           <label>
             Mash duration
             <input type="text" value={draft.mashDuration} onChange={(event) => updateField("mashDuration", event.target.value)} placeholder="e.g. 60 minutes" />
@@ -1048,6 +1083,14 @@ function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItem
             Hop additions
             <textarea value={draft.hopAdditions} onChange={(event) => updateField("hopAdditions", event.target.value)} placeholder="Describe timing and quantities" />
           </label>
+          <TemperatureCheckPanel
+            title="Whirlpool temperature checks"
+            description="Record 1-2 whirlpool checks before transfer or pitch prep."
+            checks={draft.whirlpoolTempChecks}
+            onChange={(checks) => updateField("whirlpoolTempChecks", checks)}
+            minRows={1}
+            maxRows={2}
+          />
           <label>
             Kettle gravity
             <input type="text" value={draft.kettleGravity} onChange={(event) => updateField("kettleGravity", event.target.value)} placeholder="e.g. 1.050" />
@@ -1075,6 +1118,28 @@ function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItem
               <input type="text" value={draft.targetFG} onChange={(event) => updateField("targetFG", event.target.value)} placeholder={activeBatch?.target_fg ?? ""} />
             </label>
           </div>
+          <TemperatureCheckPanel
+            title="Yeast pitch temperature"
+            description="Record temperature at pitch."
+            checks={draft.yeastPitchTempChecks}
+            onChange={(checks) => updateField("yeastPitchTempChecks", checks)}
+            maxRows={1}
+          />
+          <label>
+            Fermentation monitoring
+            <select value={draft.fermentationMonitoring} onChange={(event) => updateField("fermentationMonitoring", event.target.value)}>
+              <option>Twice daily checks</option>
+              <option>Continuous monitoring</option>
+            </select>
+          </label>
+          <TemperatureCheckPanel
+            title="Fermentation temperature checks"
+            description="Record AM/PM checks or key samples from continuous monitoring."
+            checks={draft.fermentationTempChecks}
+            onChange={(checks) => updateField("fermentationTempChecks", checks)}
+            minRows={2}
+            addLabel="Add fermentation check"
+          />
           <label>
             Fermentation notes
             <textarea value={draft.fermentationNotes} onChange={(event) => updateField("fermentationNotes", event.target.value)} />
@@ -1092,6 +1157,14 @@ function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItem
             Clarity goal
             <input value={draft.clarityGoal} onChange={(event) => updateField("clarityGoal", event.target.value)} placeholder="Describe clarity / haze target" />
           </label>
+          <TemperatureCheckPanel
+            title="Cold crash temperature checks"
+            description="Record one check per day during cold crash."
+            checks={draft.coldCrashTempChecks}
+            onChange={(checks) => updateField("coldCrashTempChecks", checks)}
+            minRows={1}
+            addLabel="Add cold crash day"
+          />
           <label>
             Conditioning notes
             <textarea value={draft.conditioningNotes} onChange={(event) => updateField("conditioningNotes", event.target.value)} />
@@ -1118,6 +1191,68 @@ function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItem
     default:
       return null;
   }
+}
+
+function TemperatureCheckPanel({ title, description, checks = [], onChange, minRows = 1, maxRows = Infinity, addLabel = "Add check" }) {
+  const updateCheck = (index, key, value) => {
+    const next = checks.map((check, rowIndex) => (rowIndex === index ? { ...check, [key]: value } : check));
+    onChange(next);
+  };
+  const addCheck = () => {
+    if (checks.length >= maxRows) return;
+    onChange([...checks, { label: `Check ${checks.length + 1}`, checked_at: "", temperature_c: "", notes: "" }]);
+  };
+  const removeCheck = (index) => {
+    if (checks.length <= minRows) return;
+    onChange(checks.filter((_, rowIndex) => rowIndex !== index));
+  };
+
+  return (
+    <div className="temperature-check-panel">
+      <div className="temperature-check-header">
+        <div>
+          <strong>{title}</strong>
+          <span>{description}</span>
+        </div>
+        {checks.length < maxRows && (
+          <button type="button" className="secondary-button" onClick={addCheck}>
+            <Plus size={16} /> {addLabel}
+          </button>
+        )}
+      </div>
+      <div className="temperature-check-list">
+        {checks.map((check, index) => (
+          <div className="temperature-check-row" key={`${check.label}-${index}`}>
+            <label>
+              Check
+              <input value={check.label} onChange={(event) => updateCheck(index, "label", event.target.value)} />
+            </label>
+            <label>
+              Time
+              <input type="datetime-local" value={check.checked_at} onChange={(event) => updateCheck(index, "checked_at", event.target.value)} />
+            </label>
+            <label>
+              Temp C
+              <input type="number" step="0.1" value={check.temperature_c} onChange={(event) => updateCheck(index, "temperature_c", event.target.value)} />
+            </label>
+            <label>
+              Notes
+              <input value={check.notes} onChange={(event) => updateCheck(index, "notes", event.target.value)} />
+            </label>
+            <button
+              type="button"
+              className="icon-button danger"
+              onClick={() => removeCheck(index)}
+              disabled={checks.length <= minRows}
+              aria-label="Remove temperature check"
+            >
+              <Trash2 size={17} />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function LogForm({ activeBatch, onSave }) {

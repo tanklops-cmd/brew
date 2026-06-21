@@ -502,6 +502,7 @@ const processFieldLabels = {
   fermentationTemp: "Fermentation temperature C",
   targetOG: "Target OG",
   targetFG: "Target FG",
+  fermentationMonitoring: "Fermentation monitoring",
   fermentationNotes: "Fermentation notes",
   conditioningDays: "Conditioning days",
   clarityGoal: "Clarity goal",
@@ -509,6 +510,16 @@ const processFieldLabels = {
   packagingDate: "Packaging date",
   qaChecks: "QA checks",
   packagingNotes: "Packaging notes"
+};
+
+const tempCheckLabels = {
+  strikeWaterTempChecks: "Strike water temperature checks",
+  mashTempChecks: "Mash temperature checks",
+  spargeTempChecks: "Sparge temperature checks",
+  whirlpoolTempChecks: "Whirlpool temperature checks",
+  yeastPitchTempChecks: "Yeast pitch temperature checks",
+  fermentationTempChecks: "Fermentation temperature checks",
+  coldCrashTempChecks: "Cold crash temperature checks"
 };
 
 function writePdfHeading(doc, title) {
@@ -521,14 +532,33 @@ function writePdfLine(doc, label, value) {
   doc.fontSize(9.5).text(`${label}: ${value === null || value === undefined || value === "" ? "N/A" : value}`);
 }
 
+function writeTemperatureChecks(doc, title, checks) {
+  if (!Array.isArray(checks) || !checks.length) return;
+  doc.moveDown(0.25);
+  doc.fontSize(10).text(title);
+  checks.forEach((check, index) => {
+    const label = check.label || `Check ${index + 1}`;
+    const checkedAt = check.checked_at ? formatDate(check.checked_at) : "Time not recorded";
+    const temp = check.temperature_c === "" || check.temperature_c === undefined || check.temperature_c === null
+      ? "Temp N/A"
+      : `${check.temperature_c} C`;
+    const notes = check.notes ? ` | ${check.notes}` : "";
+    doc.fontSize(9.5).text(`- ${label}: ${checkedAt} | ${temp}${notes}`);
+  });
+}
+
 function writeProcessStep(doc, stepId, data) {
   const stepData = data?.[stepId];
   if (!stepData || typeof stepData !== "object") return;
   writePdfHeading(doc, brewStepLabels[stepId] || stepId);
   Object.entries(stepData).forEach(([key, value]) => {
     if (key === "inventoryUsage") return;
+    if (tempCheckLabels[key]) return;
     if (value === "" || value === null || value === undefined) return;
     writePdfLine(doc, processFieldLabels[key] || key, value);
+  });
+  Object.entries(tempCheckLabels).forEach(([key, label]) => {
+    writeTemperatureChecks(doc, label, stepData[key]);
   });
   if (stepId === "ingredients" && Array.isArray(stepData.inventoryUsage) && stepData.inventoryUsage.length) {
     doc.moveDown(0.2);

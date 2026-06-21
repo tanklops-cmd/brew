@@ -1363,6 +1363,45 @@ label {
   font-size: 0.9rem;
 }
 
+.temperature-check-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(12, 24, 20, 0.72);
+}
+
+.temperature-check-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.temperature-check-header strong,
+.temperature-check-header span {
+  display: block;
+}
+
+.temperature-check-header span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.temperature-check-list {
+  display: grid;
+  gap: 10px;
+}
+
+.temperature-check-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.8fr) minmax(180px, 1fr) minmax(95px, 0.5fr) minmax(150px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
 .tools-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1722,7 +1761,8 @@ label {
   .beer-library,
   .protection-grid,
   .tools-grid,
-  .inventory-usage-row {
+  .inventory-usage-row,
+  .temperature-check-row {
     grid-template-columns: 1fr;
   }
 
@@ -2219,6 +2259,7 @@ main {
 .inventory-table-wrapper,
 .movement-list li,
 .inventory-usage-panel,
+.temperature-check-panel,
 .inventory-usage-stock,
 .tool-card-header > strong,
 .protection-grid div {
@@ -2382,6 +2423,7 @@ textarea::placeholder {
 .inventory-meta-grid div,
 .protection-grid div,
 .inventory-usage-panel,
+.temperature-check-panel,
 .stat-card {
   background: var(--sunken-gradient);
   box-shadow: var(--shadow-inset);
