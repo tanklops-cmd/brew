@@ -24,6 +24,8 @@ import {
   Plus,
   Search,
   ShieldCheck,
+  Moon,
+  Sun,
   Thermometer,
   TimerReset,
   Trash2,
@@ -71,6 +73,7 @@ function App() {
   const [activeView, setActiveView] = useState(getInitialView);
   const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState("");
+  const [theme, setTheme] = useState(getInitialTheme);
 
   const loadData = () => {
     setIsLoading(true);
@@ -87,6 +90,11 @@ function App() {
     const interval = setInterval(loadData, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("hopsession-theme", theme);
+  }, [theme]);
 
   const activeBatch = useMemo(
     () => data.batches.find((batch) => batch.id === Number(activeBatchId)) || data.batches[0],
@@ -213,6 +221,19 @@ function App() {
           </button>
         </nav>
         <div className="sidebar-footer">
+          <button
+            className="theme-toggle"
+            type="button"
+            onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            <span className={theme === "dark" ? "active" : ""}>
+              <Moon size={16} /> Dark
+            </span>
+            <span className={theme === "light" ? "active" : ""}>
+              <Sun size={16} /> Light
+            </span>
+          </button>
           <button className="ghost-button" onClick={manualBackup}>
             <DatabaseBackup size={17} /> Backup now
           </button>
@@ -2272,6 +2293,12 @@ function nextExpiry(batches) {
 function getInitialView() {
   const view = new URLSearchParams(window.location.search).get("view");
   return ["dashboard", "logs", "qa", "inventory", "tools"].includes(view) ? view : "dashboard";
+}
+
+function getInitialTheme() {
+  const saved = localStorage.getItem("hopsession-theme");
+  if (saved === "light" || saved === "dark") return saved;
+  return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
 createRoot(document.getElementById("root")).render(<App />);

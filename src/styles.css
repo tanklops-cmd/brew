@@ -2494,11 +2494,169 @@ textarea::placeholder {
   box-shadow: var(--shadow);
 }
 
+.theme-toggle {
+  min-height: 44px;
+  padding: 4px;
+  border: 1px solid rgba(244, 241, 232, 0.08);
+  border-radius: 8px;
+  background: var(--sunken-gradient);
+  box-shadow: var(--shadow-inset);
+  color: var(--muted);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.theme-toggle span {
+  min-height: 34px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.theme-toggle span.active {
+  background: var(--surface-gradient);
+  color: var(--ink);
+  box-shadow: var(--shadow-soft);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ink: #20241f;
+  --muted: #657062;
+  --paper: #e7e3d8;
+  --panel: #e3dfd4;
+  --panel-raised: #eee9dd;
+  --panel-sunken: #d7d2c6;
+  --line: rgba(39, 45, 39, 0.12);
+  --green: #3f7b58;
+  --green-dark: #d7e4d8;
+  --gold: #9d7831;
+  --red: #b5534e;
+  --shadow: 12px 12px 26px rgba(120, 112, 96, 0.38), -10px -10px 24px rgba(255, 255, 255, 0.72);
+  --shadow-soft: 7px 7px 18px rgba(120, 112, 96, 0.3), -6px -6px 16px rgba(255, 255, 255, 0.7);
+  --shadow-inset: inset 7px 7px 14px rgba(122, 114, 98, 0.28), inset -6px -6px 14px rgba(255, 255, 255, 0.72);
+  --surface-gradient: linear-gradient(145deg, #f0ecdf 0%, #ddd8cc 100%);
+  --sunken-gradient: linear-gradient(145deg, #d4cfc3 0%, #eeeade 100%);
+}
+
+:root[data-theme="light"] body {
+  background: linear-gradient(135deg, #e4dfd3 0%, #f1ece0 45%, #d8d3c7 100%);
+  color: var(--ink);
+}
+
+:root[data-theme="light"] body::before {
+  background-image: linear-gradient(rgba(48, 55, 48, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(48, 55, 48, 0.035) 1px, transparent 1px);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent 78%);
+}
+
+:root[data-theme="light"] .sidebar,
+:root[data-theme="light"] .panel,
+:root[data-theme="light"] .metric,
+:root[data-theme="light"] .tank-card,
+:root[data-theme="light"] .beer-card,
+:root[data-theme="light"] .stat-card,
+:root[data-theme="light"] .inventory-detail-card,
+:root[data-theme="light"] .inventory-table-wrapper,
+:root[data-theme="light"] .movement-list li,
+:root[data-theme="light"] .inventory-usage-panel,
+:root[data-theme="light"] .temperature-check-panel,
+:root[data-theme="light"] .protection-grid div {
+  border-color: rgba(39, 45, 39, 0.1);
+}
+
+:root[data-theme="light"] .brand-lockup,
+:root[data-theme="light"] .brew-topbar,
+:root[data-theme="light"] .batch-detail-grid,
+:root[data-theme="light"] .inventory-meta-grid div,
+:root[data-theme="light"] .inventory-usage-panel,
+:root[data-theme="light"] .temperature-check-panel,
+:root[data-theme="light"] .stat-card {
+  background: var(--sunken-gradient);
+}
+
+:root[data-theme="light"] select,
+:root[data-theme="light"] input,
+:root[data-theme="light"] textarea {
+  border-color: rgba(39, 45, 39, 0.12);
+  background: var(--sunken-gradient);
+  color: var(--ink);
+}
+
+:root[data-theme="light"] select option {
+  background: #ece7db;
+  color: var(--ink);
+}
+
+:root[data-theme="light"] .nav-list button,
+:root[data-theme="light"] .ghost-button,
+:root[data-theme="light"] .inventory-tab-button,
+:root[data-theme="light"] .task-item,
+:root[data-theme="light"] .report-item,
+:root[data-theme="light"] .audit-item,
+:root[data-theme="light"] .pill,
+:root[data-theme="light"] .batch-summary div span:not(.pill),
+:root[data-theme="light"] .beer-stats span {
+  border-color: rgba(39, 45, 39, 0.1);
+  background: var(--surface-gradient);
+  color: var(--ink);
+}
+
+:root[data-theme="light"] .nav-list button.active,
+:root[data-theme="light"] .inventory-tab-button.active,
+:root[data-theme="light"] .metric.active,
+:root[data-theme="light"] .step-track-item.current,
+:root[data-theme="light"] .audit-item.ok,
+:root[data-theme="light"] .stat-card.highlight {
+  background: var(--sunken-gradient);
+  color: var(--ink);
+}
+
+:root[data-theme="light"] .primary-button {
+  background: linear-gradient(145deg, #5f9d75 0%, #3f7b58 100%);
+  color: #f8f5eb;
+}
+
+:root[data-theme="light"] .secondary-button {
+  background: linear-gradient(145deg, #d0ad62 0%, #a8833c 100%);
+  color: #231b0d;
+}
+
+:root[data-theme="light"] .muted-copy,
+:root[data-theme="light"] .tank-card-head small,
+:root[data-theme="light"] .tank-card p,
+:root[data-theme="light"] .task-item small,
+:root[data-theme="light"] .report-item small,
+:root[data-theme="light"] .inventory-table td small,
+:root[data-theme="light"] .inventory-table-unit {
+  color: var(--muted);
+}
+
 @media (max-width: 1100px) {
   .sidebar {
     margin: 12px 0 12px 12px;
     height: calc(100vh - 24px);
     padding: 14px 10px;
+  }
+
+  .theme-toggle {
+    width: 52px;
+    grid-template-columns: 1fr;
+  }
+
+  .theme-toggle span {
+    display: none;
+  }
+
+  .theme-toggle span.active {
+    display: inline-flex;
+    font-size: 0;
   }
 
   main {
