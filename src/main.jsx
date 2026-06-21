@@ -935,6 +935,11 @@ function currentDateTimeLocalValue() {
   return new Date(now.getTime() - offsetMs).toISOString().slice(0, 16);
 }
 
+function displayDateTimeLocalValue(value) {
+  if (!value) return "Auto timestamp";
+  return new Date(value).toLocaleString("en-NZ", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
 function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItems = []) {
   const rawMaterials = inventoryItems.filter((item) => item.category === "Raw Materials");
   const updateUsageRow = (index, key, value) => {
@@ -1254,8 +1259,8 @@ function TemperatureCheckPanel({ title, checks = [], onChange, minRows = 1, maxR
               <input value={check.label} onChange={(event) => updateCheck(index, "label", event.target.value)} />
             </label>
             <label>
-              Time
-              <input type="datetime-local" value={check.checked_at} onChange={(event) => updateCheck(index, "checked_at", event.target.value)} />
+              Timestamp
+              <span className="timestamp-display">{displayDateTimeLocalValue(check.checked_at)}</span>
             </label>
             <label>
               Temp C
