@@ -127,11 +127,13 @@ function App() {
     setTimeout(() => setToast(""), 2200);
   };
 
-  const saveBatchProcess = async (batchId, payload) => {
+  const saveBatchProcess = async (batchId, payload, options = {}) => {
     await api(`/api/batches/${batchId}/process`, { method: "PATCH", body: JSON.stringify(payload) });
-    setToast("Brewing progress saved");
-    loadData();
-    setTimeout(() => setToast(""), 2200);
+    if (!options.silent) {
+      setToast("Brewing progress saved");
+      setTimeout(() => setToast(""), 2200);
+    }
+    if (options.reload !== false) loadData();
   };
 
   const completeBatch = async (batchId, payload = {}) => {
@@ -588,6 +590,10 @@ function BrewingView({ data, activeBatch, activeLogs, onSaveBatch, onSaveBatchPr
   const [processData, setProcessData] = useState(serverProcessData);
   const currentStep = brewSteps[stepIndex] || brewSteps[0];
   const [draft, setDraft] = useState(() => buildStepDraft(currentStep.id, processData, activeBatch));
+  const draftDirtyRef = useRef(false);
+  const batchIdRef = useRef(activeBatch?.id);
+  const processDataRef = useRef(processData);
+  const autosaveVersionRef = useRef(0);
 
   const activeBatches = useMemo(
     () => data.batches.filter((b) => b.status !== "Archived"),
@@ -617,18 +623,48 @@ function BrewingView({ data, activeBatch, activeLogs, onSaveBatch, onSaveBatchPr
   }, [activeBatch?.id, activeBatch?.current_step]);
 
   useEffect(() => {
-    setProcessData(serverProcessData);
-  }, [activeBatch?.id, serverProcessData]);
+    processDataRef.current = processData;
+  }, [processData]);
+
+  useEffect(() => {
+    const batchChanged = batchIdRef.current !== activeBatch?.id;
+    if (batchChanged || !draftDirtyRef.current) {
+      setProcessData(serverProcessData);
+      setDraft(buildStepDraft(currentStep.id, serverProcessData, activeBatch));
+      draftDirtyRef.current = false;
+      batchIdRef.current = activeBatch?.id;
+    }
+  }, [activeBatch?.id, serverProcessData, currentStep.id, activeBatch]);
 
   useEffect(() => {
     setDraft(buildStepDraft(currentStep.id, processData, activeBatch));
-  }, [currentStep.id, processData, activeBatch?.id]);
+  }, [currentStep.id, activeBatch?.id]);
 
   useEffect(() => {
     setIsCreating(false);
   }, [activeBatch?.id]);
 
-  const updateField = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
+  useEffect(() => {
+    if (!activeBatch?.id || !draftDirtyRef.current) return undefined;
+    const timer = setTimeout(async () => {
+      const autosaveVersion = autosaveVersionRef.current;
+      const updatedData = { ...processDataRef.current, [currentStep.id]: draft, lastSavedAt: new Date().toISOString() };
+      setProcessData(updatedData);
+      await onSaveBatchProcess(activeBatch.id, { current_step: currentStep.id, process_data: updatedData }, { silent: true, reload: false });
+      if (autosaveVersion === autosaveVersionRef.current) draftDirtyRef.current = false;
+    }, 900);
+    return () => clearTimeout(timer);
+  }, [draft, currentStep.id, activeBatch?.id, onSaveBatchProcess]);
+
+  const updateField = (key, value) => {
+    draftDirtyRef.current = true;
+    autosaveVersionRef.current += 1;
+    setDraft((current) => {
+      const next = { ...current, [key]: value };
+      setProcessData((existing) => ({ ...existing, [currentStep.id]: next }));
+      return next;
+    });
+  };
   const isLastStep = stepIndex === brewSteps.length - 1;
 
   const saveProgress = async (nextIndex = null) => {
@@ -641,6 +677,7 @@ function BrewingView({ data, activeBatch, activeLogs, onSaveBatch, onSaveBatchPr
     const payload = { current_step: nextStepId, process_data: updatedData };
     if (autoStatus) payload.status = autoStatus;
     await onSaveBatchProcess(activeBatch.id, payload);
+    draftDirtyRef.current = false;
   };
 
   const completeBrew = async () => {
