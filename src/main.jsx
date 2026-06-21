@@ -551,7 +551,8 @@ function stepToStatus(stepId) {
 function BrewingView({ data, activeBatch, activeLogs, onSaveBatch, onSaveBatchProcess, setActiveBatchId, setActiveView }) {
   const [isCreating, setIsCreating] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
-  const processData = useMemo(() => activeBatch?.process_data ?? {}, [activeBatch?.id, activeBatch?.process_data]);
+  const serverProcessData = useMemo(() => activeBatch?.process_data ?? {}, [activeBatch?.id, activeBatch?.process_data]);
+  const [processData, setProcessData] = useState(serverProcessData);
   const currentStep = brewSteps[stepIndex] || brewSteps[0];
   const [draft, setDraft] = useState(() => buildStepDraft(currentStep.id, processData, activeBatch));
 
@@ -583,6 +584,10 @@ function BrewingView({ data, activeBatch, activeLogs, onSaveBatch, onSaveBatchPr
   }, [activeBatch?.id, activeBatch?.current_step]);
 
   useEffect(() => {
+    setProcessData(serverProcessData);
+  }, [activeBatch?.id, serverProcessData]);
+
+  useEffect(() => {
     setDraft(buildStepDraft(currentStep.id, processData, activeBatch));
   }, [currentStep.id, processData, activeBatch?.id]);
 
@@ -597,6 +602,7 @@ function BrewingView({ data, activeBatch, activeLogs, onSaveBatch, onSaveBatchPr
     const updatedData = { ...processData, [currentStep.id]: draft, lastSavedAt: new Date().toISOString() };
     const targetIndex = nextIndex !== null ? nextIndex : stepIndex;
     const nextStepId = brewSteps[targetIndex]?.id || currentStep.id;
+    setProcessData(updatedData);
     if (nextIndex !== null) setStepIndex(Math.max(0, Math.min(brewSteps.length - 1, nextIndex)));
     const autoStatus = stepToStatus(nextStepId);
     const payload = { current_step: nextStepId, process_data: updatedData };
@@ -687,7 +693,9 @@ function BrewingView({ data, activeBatch, activeLogs, onSaveBatch, onSaveBatchPr
                     key={step.id}
                     className={`step-track-item${isDone || hasData ? " done" : ""}${isCurrent ? " current" : ""}`}
                     title={step.hint}
-                    onClick={() => setStepIndex(i)}
+                    onClick={() => {
+                      if (i !== stepIndex) saveProgress(i);
+                    }}
                   >
                     <div className="step-track-dot">
                       {isDone || (hasData && !isCurrent) ? <CheckCircle2 size={13} /> : <span>{i + 1}</span>}
