@@ -908,6 +908,12 @@ function normalizeTempChecks(saved, labels) {
   return labels.map((label) => ({ label, checked_at: "", temperature_c: "", notes: "" }));
 }
 
+function currentDateTimeLocalValue() {
+  const now = new Date();
+  const offsetMs = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
 function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItems = []) {
   const rawMaterials = inventoryItems.filter((item) => item.category === "Raw Materials");
   const updateUsageRow = (index, key, value) => {
@@ -1195,12 +1201,19 @@ function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItem
 
 function TemperatureCheckPanel({ title, description, checks = [], onChange, minRows = 1, maxRows = Infinity, addLabel = "Add check" }) {
   const updateCheck = (index, key, value) => {
-    const next = checks.map((check, rowIndex) => (rowIndex === index ? { ...check, [key]: value } : check));
+    const next = checks.map((check, rowIndex) => {
+      if (rowIndex !== index) return check;
+      const updated = { ...check, [key]: value };
+      if (key === "temperature_c" && value !== "" && !updated.checked_at) {
+        updated.checked_at = currentDateTimeLocalValue();
+      }
+      return updated;
+    });
     onChange(next);
   };
   const addCheck = () => {
     if (checks.length >= maxRows) return;
-    onChange([...checks, { label: `Check ${checks.length + 1}`, checked_at: "", temperature_c: "", notes: "" }]);
+    onChange([...checks, { label: `Check ${checks.length + 1}`, checked_at: currentDateTimeLocalValue(), temperature_c: "", notes: "" }]);
   };
   const removeCheck = (index) => {
     if (checks.length <= minRows) return;
