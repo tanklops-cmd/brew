@@ -923,7 +923,7 @@ function normalizeTempChecks(saved, labels) {
       label: check.label ?? labels[index] ?? `Check ${index + 1}`,
       checked_at: check.checked_at ?? "",
       temperature_c: check.temperature_c ?? "",
-      notes: check.notes ?? ""
+      notes: ""
     }));
   }
   return labels.map((label) => ({ label, checked_at: "", temperature_c: "", notes: "" }));
@@ -1068,14 +1068,12 @@ function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItem
         <>
           <TemperatureCheckPanel
             title="Strike water temperature"
-            description="Record the strike water temperature before mash in."
             checks={draft.strikeWaterTempChecks}
             onChange={(checks) => updateField("strikeWaterTempChecks", checks)}
             maxRows={1}
           />
           <TemperatureCheckPanel
             title="Mash temperature checks"
-            description="Record 3-5 mash checks across the rest."
             checks={draft.mashTempChecks}
             onChange={(checks) => updateField("mashTempChecks", checks)}
             minRows={3}
@@ -1083,7 +1081,6 @@ function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItem
           />
           <TemperatureCheckPanel
             title="Sparge temperature checks"
-            description="Record 1-2 sparge checks."
             checks={draft.spargeTempChecks}
             onChange={(checks) => updateField("spargeTempChecks", checks)}
             minRows={1}
@@ -1112,7 +1109,6 @@ function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItem
           </label>
           <TemperatureCheckPanel
             title="Whirlpool temperature checks"
-            description="Record 1-2 whirlpool checks before transfer or pitch prep."
             checks={draft.whirlpoolTempChecks}
             onChange={(checks) => updateField("whirlpoolTempChecks", checks)}
             minRows={1}
@@ -1147,7 +1143,6 @@ function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItem
           </div>
           <TemperatureCheckPanel
             title="Yeast pitch temperature"
-            description="Record temperature at pitch."
             checks={draft.yeastPitchTempChecks}
             onChange={(checks) => updateField("yeastPitchTempChecks", checks)}
             maxRows={1}
@@ -1161,7 +1156,6 @@ function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItem
           </label>
           <TemperatureCheckPanel
             title="Fermentation temperature checks"
-            description="Record AM/PM checks or key samples from continuous monitoring."
             checks={draft.fermentationTempChecks}
             onChange={(checks) => updateField("fermentationTempChecks", checks)}
             minRows={2}
@@ -1186,7 +1180,6 @@ function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItem
           </label>
           <TemperatureCheckPanel
             title="Cold crash temperature checks"
-            description="Record one check per day during cold crash."
             checks={draft.coldCrashTempChecks}
             onChange={(checks) => updateField("coldCrashTempChecks", checks)}
             minRows={1}
@@ -1220,7 +1213,7 @@ function renderStepFields(stepId, draft, updateField, activeBatch, inventoryItem
   }
 }
 
-function TemperatureCheckPanel({ title, description, checks = [], onChange, minRows = 1, maxRows = Infinity, addLabel = "Add check" }) {
+function TemperatureCheckPanel({ title, checks = [], onChange, minRows = 1, maxRows = Infinity, addLabel = "Add check" }) {
   const updateCheck = (index, key, value) => {
     const next = checks.map((check, rowIndex) => {
       if (rowIndex !== index) return check;
@@ -1246,7 +1239,6 @@ function TemperatureCheckPanel({ title, description, checks = [], onChange, minR
       <div className="temperature-check-header">
         <div>
           <strong>{title}</strong>
-          <span>{description}</span>
         </div>
         {checks.length < maxRows && (
           <button type="button" className="secondary-button" onClick={addCheck}>
@@ -1268,10 +1260,6 @@ function TemperatureCheckPanel({ title, description, checks = [], onChange, minR
             <label>
               Temp C
               <input type="number" step="0.1" value={check.temperature_c} onChange={(event) => updateCheck(index, "temperature_c", event.target.value)} />
-            </label>
-            <label>
-              Notes
-              <input value={check.notes} onChange={(event) => updateCheck(index, "notes", event.target.value)} />
             </label>
             <button
               type="button"

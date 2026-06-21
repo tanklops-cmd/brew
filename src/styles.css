@@ -1379,15 +1379,8 @@ label {
   align-items: center;
 }
 
-.temperature-check-header strong,
-.temperature-check-header span {
+.temperature-check-header strong {
   display: block;
-}
-
-.temperature-check-header span {
-  margin-top: 3px;
-  color: var(--muted);
-  font-size: 0.82rem;
 }
 
 .temperature-check-list {
@@ -1397,7 +1390,7 @@ label {
 
 .temperature-check-row {
   display: grid;
-  grid-template-columns: minmax(130px, 0.8fr) minmax(180px, 1fr) minmax(95px, 0.5fr) minmax(150px, 1fr) auto;
+  grid-template-columns: minmax(160px, 1fr) minmax(190px, 1fr) minmax(110px, 0.5fr) auto;
   gap: 10px;
   align-items: end;
 }

@@ -542,8 +542,7 @@ function writeTemperatureChecks(doc, title, checks) {
     const temp = check.temperature_c === "" || check.temperature_c === undefined || check.temperature_c === null
       ? "Temp N/A"
       : `${check.temperature_c} C`;
-    const notes = check.notes ? ` | ${check.notes}` : "";
-    doc.fontSize(9.5).text(`- ${label}: ${checkedAt} | ${temp}${notes}`);
+    doc.fontSize(9.5).text(`- ${label}: ${checkedAt} | ${temp}`);
   });
 }
 
