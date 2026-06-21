@@ -137,6 +137,8 @@ function ensureColumn(table, column, definition) {
 const tankStatusColumnAdded = ensureColumn("tanks", "status", "TEXT NOT NULL DEFAULT 'Available'");
 const processDataColumnAdded = ensureColumn("batches", "process_data", "TEXT DEFAULT NULL");
 const currentStepColumnAdded = ensureColumn("batches", "current_step", "TEXT DEFAULT 'setup'");
+const archivedAtColumnAdded = ensureColumn("batches", "archived_at", "TEXT DEFAULT NULL");
+const archiveNotesColumnAdded = ensureColumn("batches", "archive_notes", "TEXT DEFAULT ''");
 
 function getSetting(key) {
   const row = db.prepare("SELECT value FROM settings WHERE key = ?").get(key);
@@ -789,6 +791,40 @@ app.patch("/api/batches/:id/process", (req, res) => {
   res.json(getBatch(batchId));
 });
 
+app.patch("/api/batches/:id/complete", (req, res) => {
+  const batchId = Number(req.params.id);
+  const batch = getBatch(batchId);
+  if (!batch) {
+    res.status(404).json({ error: "Batch not found" });
+    return;
+  }
+
+  const logs = db.prepare("SELECT COUNT(*) AS count FROM logs WHERE batch_id = ?").get(batchId);
+  const hasPackagingStep = Boolean(batch.process_data?.packaging);
+  const packagingStatus = ["Ready to package", "Packaged", "Archived"].includes(batch.status);
+  if (!hasPackagingStep && !packagingStatus) {
+    res.status(400).json({ error: "Complete the Packaging step or mark the batch Ready to package before archiving." });
+    return;
+  }
+  if (!logs.count) {
+    res.status(400).json({ error: "Add at least one production log entry before archiving." });
+    return;
+  }
+
+  const archivedAt = new Date().toISOString();
+  db.prepare(`
+    UPDATE batches
+    SET status = 'Archived',
+        current_step = 'packaging',
+        archived_at = COALESCE(archived_at, ?),
+        archive_notes = ?,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `).run(archivedAt, req.body?.archive_notes || "Completed from Audit", batchId);
+  db.prepare("UPDATE tanks SET status = 'Available' WHERE id = ?").run(batch.tank_id);
+  res.json(getBatch(batchId));
+});
+
 app.patch("/api/settings/:key", (req, res) => {
   const key = req.params.key;
   const value = req.body?.value;
@@ -821,6 +857,8 @@ app.get("/api/batches/:id/pdf", (req, res) => {
   writePdfLine(doc, "Batch volume", `${batch.volume_l} L`);
   writePdfLine(doc, "Status", batch.status);
   writePdfLine(doc, "Current workflow step", brewStepLabels[batch.current_step] || batch.current_step);
+  writePdfLine(doc, "Archived at", batch.archived_at ? formatDate(batch.archived_at) : "Not archived");
+  writePdfLine(doc, "Archive notes", batch.archive_notes || "Not recorded");
   writePdfLine(doc, "Operator", batch.operator);
   writePdfLine(doc, "Brew date", batch.brew_date);
   writePdfLine(doc, "Package date", batch.package_date || "TBC");

@@ -126,6 +126,13 @@ function App() {
     setTimeout(() => setToast(""), 2200);
   };
 
+  const completeBatch = async (batchId) => {
+    await api(`/api/batches/${batchId}/complete`, { method: "PATCH", body: JSON.stringify({ archive_notes: "Completed from Audit" }) });
+    setToast("Brew completed and archived");
+    loadData();
+    setTimeout(() => setToast(""), 2600);
+  };
+
   const lookupBarcode = async (barcode) => {
     return api(`/api/inventory/barcode/${encodeURIComponent(barcode)}`);
   };
@@ -241,6 +248,7 @@ function App() {
                 activeBatchId={activeBatchId}
                 activeLogs={activeLogs}
                 onSelectBatch={setCurrentBatchId}
+                onCompleteBatch={completeBatch}
               />
             )}
             {activeView === "inventory" && (
@@ -1262,9 +1270,25 @@ function BatchForm({ beers, tanks, onSave, onCancel }) {
   );
 }
 
-function AuditView({ batches, activeBatch, activeBatchId, activeLogs, onSelectBatch }) {
+function AuditView({ batches, activeBatch, activeBatchId, activeLogs, onSelectBatch, onCompleteBatch }) {
   const latest = activeLogs.at(-1);
   const stepCount = activeBatch?.process_data ? brewSteps.filter((step) => activeBatch.process_data[step.id]).length : 0;
+  const isArchived = activeBatch?.status === "Archived";
+  const hasPackagingStep = Boolean(activeBatch?.process_data?.packaging);
+  const hasPackagingStatus = ["Ready to package", "Packaged", "Archived"].includes(activeBatch?.status);
+  const completionRequirements = [
+    { ok: Boolean(activeBatch?.batch_no), label: "Batch selected" },
+    { ok: hasPackagingStep || hasPackagingStatus, label: "Packaging reached or batch marked ready to package" },
+    { ok: activeLogs.length > 0, label: "At least one production log entry exists" }
+  ];
+  const canComplete = !isArchived && completionRequirements.every((item) => item.ok);
+  const missingRequirements = completionRequirements.filter((item) => !item.ok);
+  const completeBrew = () => {
+    if (!activeBatch || !canComplete) return;
+    if (!window.confirm(`Complete and archive ${activeBatch.batch_no}? This removes it from the tank dashboard but keeps it recallable in Audit.`)) return;
+    onCompleteBatch(activeBatch.id);
+  };
+
   return (
     <div className="two-column">
       <section className="panel">
@@ -1275,7 +1299,7 @@ function AuditView({ batches, activeBatch, activeBatchId, activeLogs, onSelectBa
             <select value={activeBatchId || ""} onChange={(event) => onSelectBatch(Number(event.target.value))}>
               {batches.map((batch) => (
                 <option key={batch.id} value={batch.id}>
-                  {batch.batch_no} - {batch.beer_name}
+                  {batch.batch_no} - {batch.beer_name} ({batch.status})
                 </option>
               ))}
             </select>
@@ -1287,6 +1311,29 @@ function AuditView({ batches, activeBatch, activeBatchId, activeLogs, onSelectBa
           <AuditItem ok={activeLogs.length > 0} label={`${activeLogs.length} production log entries captured`} />
           <AuditItem ok={Boolean(latest?.gravity || latest?.ph || latest?.temperature_c)} label="Latest readings available" />
         </div>
+      </section>
+      <section className="panel archive-panel">
+        <SectionTitle icon={<Archive />} title="Complete brew" />
+        <BatchSummary batch={activeBatch} />
+        {isArchived ? (
+          <p className="muted-copy">This brew is archived and remains available here for audit export at any time.</p>
+        ) : (
+          <>
+            <div className="audit-list">
+              {completionRequirements.map((item) => (
+                <AuditItem key={item.label} ok={item.ok} label={item.label} />
+              ))}
+            </div>
+            <button className="primary-button full-width" type="button" disabled={!canComplete} onClick={completeBrew}>
+              <Archive size={17} /> Complete and archive brew
+            </button>
+            <p className="muted-copy">
+              {canComplete
+                ? "Completion will release the tank to Available and keep the full batch record in Audit."
+                : `Complete is unavailable until: ${missingRequirements.map((item) => item.label).join("; ")}.`}
+            </p>
+          </>
+        )}
       </section>
       <section className="panel">
         <SectionTitle icon={<ClipboardList />} title="Export" />
