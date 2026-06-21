@@ -126,10 +126,14 @@ function App() {
     setTimeout(() => setToast(""), 2200);
   };
 
-  const completeBatch = async (batchId) => {
-    await api(`/api/batches/${batchId}/complete`, { method: "PATCH", body: JSON.stringify({ archive_notes: "Completed from Audit" }) });
+  const completeBatch = async (batchId, payload = {}) => {
+    await api(`/api/batches/${batchId}/complete`, {
+      method: "PATCH",
+      body: JSON.stringify({ archive_notes: "Completed from Brewing wizard", ...payload })
+    });
     setToast("Brew completed and archived");
     loadData();
+    setActiveView("qa");
     setTimeout(() => setToast(""), 2600);
   };
 
@@ -237,6 +241,7 @@ function App() {
                 activeLogs={activeLogs}
                 onSaveBatch={saveBatch}
                 onSaveBatchProcess={saveBatchProcess}
+                onCompleteBatch={completeBatch}
                 setActiveBatchId={setActiveBatchId}
                 setActiveView={setActiveView}
               />
@@ -248,7 +253,6 @@ function App() {
                 activeBatchId={activeBatchId}
                 activeLogs={activeLogs}
                 onSelectBatch={setCurrentBatchId}
-                onCompleteBatch={completeBatch}
               />
             )}
             {activeView === "inventory" && (
@@ -556,7 +560,7 @@ function stepToStatus(stepId) {
   return map[stepId] || null;
 }
 
-function BrewingView({ data, activeBatch, activeLogs, onSaveBatch, onSaveBatchProcess, setActiveBatchId, setActiveView }) {
+function BrewingView({ data, activeBatch, activeLogs, onSaveBatch, onSaveBatchProcess, onCompleteBatch, setActiveBatchId, setActiveView }) {
   const [isCreating, setIsCreating] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const serverProcessData = useMemo(() => activeBatch?.process_data ?? {}, [activeBatch?.id, activeBatch?.process_data]);
@@ -616,6 +620,16 @@ function BrewingView({ data, activeBatch, activeLogs, onSaveBatch, onSaveBatchPr
     const payload = { current_step: nextStepId, process_data: updatedData };
     if (autoStatus) payload.status = autoStatus;
     await onSaveBatchProcess(activeBatch.id, payload);
+  };
+
+  const completeBrew = async () => {
+    const updatedData = { ...processData, [currentStep.id]: draft, lastSavedAt: new Date().toISOString() };
+    setProcessData(updatedData);
+    await onCompleteBatch(activeBatch.id, {
+      current_step: currentStep.id,
+      process_data: updatedData,
+      archive_notes: "Completed from Brewing wizard"
+    });
   };
 
   const goBack = () => { if (stepIndex > 0) saveProgress(stepIndex - 1); };
@@ -738,7 +752,7 @@ function BrewingView({ data, activeBatch, activeLogs, onSaveBatch, onSaveBatchPr
                 <button type="submit" className="primary-button">
                   Save
                 </button>
-                <button type="button" className="secondary-button" disabled={isLastStep} onClick={goNext}>
+                <button type="button" className="secondary-button" onClick={isLastStep ? completeBrew : goNext}>
                   {isLastStep ? (
                     <>
                       <CheckCircle2 size={16} /> Complete
@@ -1270,24 +1284,10 @@ function BatchForm({ beers, tanks, onSave, onCancel }) {
   );
 }
 
-function AuditView({ batches, activeBatch, activeBatchId, activeLogs, onSelectBatch, onCompleteBatch }) {
+function AuditView({ batches, activeBatch, activeBatchId, activeLogs, onSelectBatch }) {
   const latest = activeLogs.at(-1);
   const stepCount = activeBatch?.process_data ? brewSteps.filter((step) => activeBatch.process_data[step.id]).length : 0;
-  const isArchived = activeBatch?.status === "Archived";
-  const hasPackagingStep = Boolean(activeBatch?.process_data?.packaging);
-  const hasPackagingStatus = ["Ready to package", "Packaged", "Archived"].includes(activeBatch?.status);
-  const completionRequirements = [
-    { ok: Boolean(activeBatch?.batch_no), label: "Batch selected" },
-    { ok: hasPackagingStep || hasPackagingStatus, label: "Packaging reached or batch marked ready to package" },
-    { ok: activeLogs.length > 0, label: "At least one production log entry exists" }
-  ];
-  const canComplete = !isArchived && completionRequirements.every((item) => item.ok);
-  const missingRequirements = completionRequirements.filter((item) => !item.ok);
-  const completeBrew = () => {
-    if (!activeBatch || !canComplete) return;
-    if (!window.confirm(`Complete and archive ${activeBatch.batch_no}? This removes it from the tank dashboard but keeps it recallable in Audit.`)) return;
-    onCompleteBatch(activeBatch.id);
-  };
+  const archivedBatches = batches.filter((batch) => batch.status === "Archived");
 
   return (
     <div className="two-column">
@@ -1312,29 +1312,6 @@ function AuditView({ batches, activeBatch, activeBatchId, activeLogs, onSelectBa
           <AuditItem ok={Boolean(latest?.gravity || latest?.ph || latest?.temperature_c)} label="Latest readings available" />
         </div>
       </section>
-      <section className="panel archive-panel">
-        <SectionTitle icon={<Archive />} title="Complete brew" />
-        <BatchSummary batch={activeBatch} />
-        {isArchived ? (
-          <p className="muted-copy">This brew is archived and remains available here for audit export at any time.</p>
-        ) : (
-          <>
-            <div className="audit-list">
-              {completionRequirements.map((item) => (
-                <AuditItem key={item.label} ok={item.ok} label={item.label} />
-              ))}
-            </div>
-            <button className="primary-button full-width" type="button" disabled={!canComplete} onClick={completeBrew}>
-              <Archive size={17} /> Complete and archive brew
-            </button>
-            <p className="muted-copy">
-              {canComplete
-                ? "Completion will release the tank to Available and keep the full batch record in Audit."
-                : `Complete is unavailable until: ${missingRequirements.map((item) => item.label).join("; ")}.`}
-            </p>
-          </>
-        )}
-      </section>
       <section className="panel">
         <SectionTitle icon={<ClipboardList />} title="Export" />
         <BatchSummary batch={activeBatch} />
@@ -1345,6 +1322,26 @@ function AuditView({ batches, activeBatch, activeBatchId, activeLogs, onSelectBa
           <a className="primary-button full-width" href={`/api/batches/${activeBatch.id}/pdf`} target="_blank" rel="noreferrer">
             <Download size={17} /> Download audit PDF
           </a>
+        )}
+      </section>
+      <section className="panel wide">
+        <SectionTitle icon={<Archive />} title="Past brews" />
+        {archivedBatches.length ? (
+          <div className="report-list">
+            {archivedBatches.map((batch) => (
+              <button className="report-item" key={batch.id} type="button" onClick={() => onSelectBatch(batch.id)}>
+                <span>
+                  <strong>{batch.batch_no} - {batch.beer_name}</strong>
+                  <small>
+                    {batch.brew_date || "Brew date TBC"} | {batch.archived_at ? `Archived ${formatShortDate(batch.archived_at)}` : "Archived"}
+                  </small>
+                </span>
+                <Pill>{activeBatch?.id === batch.id ? "Selected" : "Recall"}</Pill>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="muted-copy">Completed brews will appear here for recall and audit export.</p>
         )}
       </section>
     </div>

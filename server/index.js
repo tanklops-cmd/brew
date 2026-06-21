@@ -799,28 +799,31 @@ app.patch("/api/batches/:id/complete", (req, res) => {
     return;
   }
 
-  const logs = db.prepare("SELECT COUNT(*) AS count FROM logs WHERE batch_id = ?").get(batchId);
-  const hasPackagingStep = Boolean(batch.process_data?.packaging);
-  const packagingStatus = ["Ready to package", "Packaged", "Archived"].includes(batch.status);
-  if (!hasPackagingStep && !packagingStatus) {
-    res.status(400).json({ error: "Complete the Packaging step or mark the batch Ready to package before archiving." });
-    return;
-  }
-  if (!logs.count) {
-    res.status(400).json({ error: "Add at least one production log entry before archiving." });
-    return;
+  let processData = batch.process_data || {};
+  if (req.body.process_data !== undefined) {
+    if (typeof req.body.process_data === "string") {
+      try {
+        processData = JSON.parse(req.body.process_data);
+      } catch (error) {
+        processData = {};
+      }
+    } else if (typeof req.body.process_data === "object") {
+      processData = req.body.process_data;
+    }
+    reconcileBatchInventoryUsage(batch, batch.process_data || {}, processData);
   }
 
   const archivedAt = new Date().toISOString();
   db.prepare(`
     UPDATE batches
     SET status = 'Archived',
-        current_step = 'packaging',
+        current_step = ?,
+        process_data = ?,
         archived_at = COALESCE(archived_at, ?),
         archive_notes = ?,
         updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `).run(archivedAt, req.body?.archive_notes || "Completed from Audit", batchId);
+  `).run(req.body?.current_step || "packaging", JSON.stringify(processData), archivedAt, req.body?.archive_notes || "Completed from Brewing wizard", batchId);
   db.prepare("UPDATE tanks SET status = 'Available' WHERE id = ?").run(batch.tank_id);
   res.json(getBatch(batchId));
 });
